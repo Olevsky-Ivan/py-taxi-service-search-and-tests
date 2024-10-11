@@ -1,10 +1,11 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import generic
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404
 
 from .models import Driver, Car, Manufacturer
 from .forms import (
@@ -156,11 +157,18 @@ class DriverDeleteView(LoginRequiredMixin, generic.DeleteView):
 
 @login_required
 def toggle_assign_to_car(request, pk):
-    driver = Driver.objects.get(id=request.user.id)
-    if (
-        Car.objects.get(id=pk) in driver.cars.all()
-    ):
-        driver.cars.remove(pk)
+    try:
+        driver = Driver.objects.get(user=request.user)
+    except Driver.DoesNotExist:
+        return HttpResponseForbidden(
+            "You are not authorized to perform this action."
+        )
+
+    car = get_object_or_404(Car, id=pk)
+
+    if car in driver.cars.all():
+        driver.cars.remove(car)
     else:
-        driver.cars.add(pk)
+        driver.cars.add(car)
+
     return HttpResponseRedirect(reverse_lazy("taxi:car-detail", args=[pk]))

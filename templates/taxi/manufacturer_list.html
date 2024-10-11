@@ -10,7 +10,6 @@
   </h1>
 
 <form class="form-inline" method="get">
-    {% csrf_token %}
     {{ search_form|crispy }}
     <input type="submit" class="btn btn-secondary" value="🔍">
 </form>

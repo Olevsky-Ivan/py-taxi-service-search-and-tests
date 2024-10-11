@@ -6,6 +6,20 @@ from django.core.exceptions import ValidationError
 from taxi.models import Car, Driver
 
 
+def validate_license_number(license_number):
+    first_three = license_number[:3]
+
+    if not first_three.isupper():
+        raise ValidationError(
+            "First 3 characters should be uppercase letters"
+        )
+
+    if len(license_number[3:]) != 5 or not license_number[3:].isdigit():
+        raise ValidationError(
+            "Last 5 characters should be digits"
+        )
+
+
 class CarForm(forms.ModelForm):
     drivers = forms.ModelMultipleChoiceField(
         queryset=get_user_model().objects.all(),
@@ -24,15 +38,8 @@ class DriverCreationForm(UserCreationForm):
 
     def clean_license_number(self):
         license_number = self.cleaned_data.get("license_number")
-        first_three = license_number[:3]
-        if not first_three.isupper():
-            raise ValidationError(
-                "First 3 characters should be uppercase letters"
-            )
-        if len(license_number[3:]) != 5 or not license_number[3:].isdigit():
-            raise ValidationError(
-                "Last 5 characters should be digits"
-            )
+        validate_license_number(license_number)  # Виклик функції валідації
+        return license_number
 
 
 class DriverLicenseUpdateForm(forms.ModelForm):
@@ -42,19 +49,6 @@ class DriverLicenseUpdateForm(forms.ModelForm):
 
     def clean_license_number(self):
         return validate_license_number(self.cleaned_data["license_number"])
-
-
-def validate_license_number(
-    license_number,
-):  # regex validation is also possible here
-    if len(license_number) != 8:
-        raise ValidationError("License number should consist of 8 characters")
-    elif not license_number[:3].isupper() or not license_number[:3].isalpha():
-        raise ValidationError("First 3 characters should be uppercase letters")
-    elif not license_number[3:].isdigit():
-        raise ValidationError("Last 5 characters should be digits")
-
-    return license_number
 
 
 class ManufacturerSearchForm(forms.Form):
