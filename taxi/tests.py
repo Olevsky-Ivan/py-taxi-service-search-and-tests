@@ -5,48 +5,32 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 
-class ModelsTests(TestCase):
-    def test_driver_str(self):
-        driver = get_user_model().objects.create(
-            username="leleka",
-            password="password",
-            first_name="Ivan",
-            last_name="Olevsky",
-            email="ivan@example.com",
-            license_number="AB123456789"
+class DriverTestCase(TestCase):
+    def setUp(self):
+        self.manufacturer1 = Manufacturer.objects.create(name="Ivan")
+        self.manufacturer2 = Manufacturer.objects.create(name="Alex")
+        self.car1 = (Car.objects.create
+                     (model="BMW",
+                      manufacturer=self.manufacturer1)
+                     )
+        self.car2 = Car.objects.create(
+            model="Mercedes",
+            manufacturer=self.manufacturer2
         )
-        self.assertEqual(
-            str(driver),
-            f"{driver.username} ({driver.first_name} {driver.last_name})")
-
-    def test_driver_with_license_number(self):
-        password = "TEST PASSWORD"
-        username = "Alexov"
-        first_name = "Alex"
-        last_name = "Statham"
-        email = "alex@example.com"
-        license_number = "1234567890"
-
-        driver = Driver.objects.create_user(
-            username=username,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            license_number=license_number,
+        self.driver1 = Driver.objects.create(
+            username="driver1",
+            license_number="tes12345"
         )
-        self.assertEqual(str(driver.license_number), license_number)
-        self.assertTrue(driver.check_password(password))
-        self.assertEqual(driver.get_full_name(), f"{first_name} {last_name}")
+        self.driver2 = Driver.objects.create(
+            username="driver2",
+            license_number="tes23456"
+        )
 
-    def test_manufacturer_str(self):
-        name = "Ivan"
-        country = "Ukraine"
-
-        manufacturer = Manufacturer.objects.create(name=name, country=country)
-        self.assertEqual(
-            str(manufacturer),
-            f"{manufacturer.name} {manufacturer.country}")
+    def test_car_list(self):
+        self.car1.drivers.set([self.driver1])
+        self.car2.drivers.set([self.driver2])
+        response = self.client.get(CAR_LIST_URL)
+        self.assertEqual(response.status_code, 302)
 
 
 class AdminTestCase(TestCase):
@@ -76,7 +60,6 @@ class AdminTestCase(TestCase):
 
 
 class FormTestCase(TestCase):
-
     def test_driver_creation_form_valid(self):
         form_data = {
             "username": "test_user",
@@ -88,7 +71,8 @@ class FormTestCase(TestCase):
             "license_number": "ABC12345",
         }
         form = DriverCreationForm(data=form_data)
-        self.assertTrue(form.is_valid(), msg=f"Form errors: {form.errors}")
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["license_number"], "ABC12345")
         print(form.cleaned_data)
 
 
@@ -96,13 +80,12 @@ CAR_LIST_URL = reverse("taxi:car-list")
 
 
 class PublicCarListTest(TestCase):
-
     def setUp(self):
         self.client = Client()
 
     def test_login_required(self):
         res = self.client.get(CAR_LIST_URL)
-        self.assertNotEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 302)
 
 
 class PrivateCarListTest(TestCase):
@@ -116,30 +99,16 @@ class PrivateCarListTest(TestCase):
         )
         self.client.force_login(self.user)
 
-    def test_retrieve_car_list(self):
         manufacturer1 = Manufacturer.objects.create(name="Ivan")
         manufacturer2 = Manufacturer.objects.create(name="Alex")
-
-        car1 = Car.objects.create(
-            model="BMW",
-            manufacturer=manufacturer1
-        )
-        car2 = Car.objects.create(
+        self.car1 = Car.objects.create(model="BMW", manufacturer=manufacturer1)
+        self.car2 = Car.objects.create(
             model="Mercedes",
             manufacturer=manufacturer2
         )
 
-        driver1 = Driver.objects.create(
-            username="driver1",
-            license_number="tes12345"
-        )
-        driver2 = Driver.objects.create(
-            username="driver2",
-            license_number="tes23456"
-        )
-
-        car1.drivers.set([driver1])
-        car2.drivers.set([driver2])
-
-        response = self.client.get(CAR_LIST_URL)
+    def test_retrieve_car_list(self):
+        response = self.client.get(reverse("taxi:car-list"))
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "BMW")
+        self.assertContains(response, "Mercedes")

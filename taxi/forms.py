@@ -18,16 +18,20 @@ class CarForm(forms.ModelForm):
 
 
 class DriverCreationForm(UserCreationForm):
-    class Meta(UserCreationForm.Meta):
+    class Meta:
         model = Driver
-        fields = UserCreationForm.Meta.fields + (
-            "license_number",
-            "first_name",
-            "last_name",
-        )
+        fields = ["username", "password1", "password2", "license_number"]
 
-    def clean_license_number(self):  # this logic is optional, but possible
-        return validate_license_number(self.cleaned_data["license_number"])
+    def clean_license_number(self):
+        license_number = self.cleaned_data.get("license_number")
+        first_three = license_number[:3]
+        if not first_three.isalpha() or not first_three.isupper():
+            raise ValidationError(
+                "First 3 characters should be uppercase letters"
+            )
+        if not license_number[3:].isdigit():
+            raise ValidationError("Last 5 characters should be digits")
+        return license_number
 
 
 class DriverLicenseUpdateForm(forms.ModelForm):
