@@ -25,13 +25,14 @@ class DriverCreationForm(UserCreationForm):
     def clean_license_number(self):
         license_number = self.cleaned_data.get("license_number")
         first_three = license_number[:3]
-        if not first_three.isalpha() or not first_three.isupper():
+        if not first_three.isupper():
             raise ValidationError(
                 "First 3 characters should be uppercase letters"
             )
-        if not license_number[3:].isdigit():
-            raise ValidationError("Last 5 characters should be digits")
-        return license_number
+        if len(license_number[3:]) != 5 or not license_number[3:].isdigit():
+            raise ValidationError(
+                "Last 5 characters should be digits"
+            )
 
 
 class DriverLicenseUpdateForm(forms.ModelForm):
@@ -66,6 +67,6 @@ class CarSearchForm(forms.Form):
 
 class DriverSearchForm(forms.Form):
     license_number = forms.CharField(
-        max_length=200,
+        max_length=10,
         label="Search by license number"
     )
