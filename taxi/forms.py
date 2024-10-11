@@ -61,4 +61,7 @@ class CarSearchForm(forms.Form):
 
 
 class DriverSearchForm(forms.Form):
-    license_number = forms.CharField(max_length=200, label="Search by license number")
+    license_number = forms.CharField(
+        max_length=200,
+        label="Search by license number"
+    )

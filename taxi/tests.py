@@ -15,10 +15,9 @@ class ModelsTests(TestCase):
             email="ivan@example.com",
             license_number="AB123456789"
         )
-        self.assertEqual(str(driver),
-                         f"{driver.username} ({driver.first_name} {driver.last_name})")
-
-
+        self.assertEqual(
+            str(driver),
+            f"{driver.username} ({driver.first_name} {driver.last_name})")
 
     def test_driver_with_license_number(self):
         password = "TEST PASSWORD"
@@ -45,10 +44,13 @@ class ModelsTests(TestCase):
         country = "Ukraine"
 
         manufacturer = Manufacturer.objects.create(name=name, country=country)
-        self.assertEqual(str(manufacturer), f"{manufacturer.name} {manufacturer.country}")
+        self.assertEqual(
+            str(manufacturer),
+            f"{manufacturer.name} {manufacturer.country}")
 
 
 class AdminTestCase(TestCase):
+
     def setUp(self):
         self.client = Client()
         self.admin_user = get_user_model().objects.create_superuser(
@@ -74,6 +76,7 @@ class AdminTestCase(TestCase):
 
 
 class FormTestCase(TestCase):
+
     def test_driver_creation_form_valid(self):
         form_data = {
             "username": "test_user",
@@ -93,12 +96,14 @@ CAR_LIST_URL = reverse("taxi:car-list")
 
 
 class PublicCarListTest(TestCase):
+
     def setUp(self):
         self.client = Client()
 
     def test_login_required(self):
         res = self.client.get(CAR_LIST_URL)
         self.assertNotEqual(res.status_code, 200)
+
 
 class PrivateCarListTest(TestCase):
     def setUp(self):
@@ -115,11 +120,23 @@ class PrivateCarListTest(TestCase):
         manufacturer1 = Manufacturer.objects.create(name="Ivan")
         manufacturer2 = Manufacturer.objects.create(name="Alex")
 
-        car1 = Car.objects.create(model="BMW", manufacturer=manufacturer1)
-        car2 = Car.objects.create(model="Mercedes", manufacturer=manufacturer2)
+        car1 = Car.objects.create(
+            model="BMW",
+            manufacturer=manufacturer1
+        )
+        car2 = Car.objects.create(
+            model="Mercedes",
+            manufacturer=manufacturer2
+        )
 
-        driver1 = Driver.objects.create(username="driver1", license_number="tes12345")
-        driver2 = Driver.objects.create(username="driver2", license_number="tes23456")
+        driver1 = Driver.objects.create(
+            username="driver1",
+            license_number="tes12345"
+        )
+        driver2 = Driver.objects.create(
+            username="driver2",
+            license_number="tes23456"
+        )
 
         car1.drivers.set([driver1])
         car2.drivers.set([driver2])
